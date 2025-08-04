@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadioWave - Online Radio Aggregator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #6200ee;
+            --primary-light: #bb86fc;
+            --secondary-color: #03dac6;
+            --background: #121212;
+            --surface: #1e1e1e;
+            --on-background: rgba(255, 255, 255, 0.87);
+            --on-surface: rgba(255, 255, 255, 0.6);
+            --error: #cf6679;
+            --card-bg: #2d2d2d;
+            --sidebar-width: 280px;
+            --header-height: 64px;
+            --player-height: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--on-background);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background-color: var(--surface);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-light);
+            margin-right: 20px;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border-radius: 30px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--on-background);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--on-surface);
+        }
+
+        /* Main Content Layout */
+        .main-container {
+            display: flex;
+            margin-top: var(--header-height);
+            margin-bottom: var(--player-height);
+            min-height: calc(100vh - var(--header-height) - var(--player-height));
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--surface);
+            padding: 20px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            position: fixed;
+            height: calc(100vh - var(--header-height) - var(--player-height));
+            top: var(--header-height);
+            left: 0;
+            z-index: 90;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: calc(var(--header-height) + 10px);
+            left: 10px;
+            z-index: 95;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--primary-light);
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-title i {
+            margin-right: 8px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .filter-option input {
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+
+        .filter-option label {
+            color: var(--on-surface);
+            cursor: pointer;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 20px;
+            margin-left: var(--sidebar-width);
+        }
+
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* Radio Station Card */
+        .station-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .station-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .station-info {
+            padding: 15px;
+        }
+
+        .station-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--on-background);
+        }
+
+        .station-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--on-surface);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .station-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .play-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .play-button:hover {
+            background-color: var(--primary-light);
+        }
+
+        .favorite-button {
+            background: none;
+            border: none;
+            color: var(--on-surface);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+
+        .favorite-button.active {
+            color: #ff4081;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--player-height);
+            background-color: var(--surface);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            width: 300px;
+        }
+
+        .player-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        .player-details {
+            overflow: hidden;
+        }
+
+        .player-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .player-meta {
+            font-size: 0.8rem;
+            color: var(--on-surface);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .player-controls {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            color: var(--on-surface);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .control-button:hover {
+            color: var(--primary-light);
+        }
+
+        .control-button.play-pause {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .control-button.play-pause:hover {
+            background-color: var(--primary-light);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 200px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            cursor: pointer;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-toggle {
+                display: flex;
+            }
+            
+            .content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+            
+            .player-info {
+                width: 220px;
+            }
+            
+            .player-name, .player-meta {
+                max-width: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .player-info {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .player-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .volume-control {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Mock data for radio stations with real streaming URLs
+        const radioStations = [
+            {
+                id: 1,
+                name: "Rock Classics",
+                description: "The best rock classics from the 70s and 80s",
+                genre: "Rock",
+                country: "USA",
+                language: "English",
+                quality: "High",
+                streamUrl: "https://streaming.radionomy.com/Rock-Classics-Radio",
+                imageUrl: "https://picsum.photos/seed/rock1/300/160.jpg",
+                isFavorite: false
+            },
+            {
+                id: 2,
+                name: "Jazz Lounge",
+                description: "Smooth jazz for relaxation",
+                genre: "Jazz",
+                country: "USA",
+                language: "English",
+                quality: "Medium",
+                streamUrl: "https://streaming.radionomy.com/JazzLoungeRadio",
+                imageUrl: "https://picsum.photos/seed/jazz1/300/160.jpg",
+                isFavorite: true
+            },
+            {
+                id: 3,
+                name: "Electronic Beats",
+                description: "Latest electronic music and remixes",
+                genre: "Electronic",
+                country: "Germany",
+                language: "English",
+                quality: "High",
+                streamUrl: "https://streaming.radionomy.com/ElectroBeats",
+                imageUrl: "https://picsum.photos/seed/electronic1/300/160.jpg",
+                isFavorite: false
+            },
+            {
+                id: 4,
+                name: "Classical Symphony",
+                description: "Masterpieces from the greatest composers",
+                genre: "Classical",
+                country: "Austria",
+                language: "Instrumental",
+                quality: "High",
+                streamUrl: "https://streaming.radionomy.com/ClassicalSymphony",
+                imageUrl: "https://picsum.photos/seed/classical1/300/160.jpg",
+                isFavorite: false
+            },
+            {
+                id: 5,
+                name: "Hip Hop Central",
+                description: "The latest hip hop and rap tracks",
+                genre: "Hip Hop",
+                country: "USA",
+                language: "English",
+                quality: "High",
+                streamUrl: "https://streaming.radionomy.com/HipHopCentral",
+                imageUrl: "https://picsum.photos/seed/hiphop1/300/160.jpg",
+                isFavorite: true
+            },
+            {
+                id: 6,
+                name: "Pop Hits",
+                description: "Today's top pop hits and chart toppers",
+                genre: "Pop",
+                country: "UK",
+                language: "English",
+                quality: "Medium",
+                streamUrl: "https://streaming.radionomy.com/PopHitsRadio",
+                imageUrl: "https://picsum.photos/seed/pop1/300/160.jpg",
+                isFavorite: false
+            },
+            {
+                id: 7,
+                name: "News Talk",
+                description: "Latest news and current affairs",
+                genre: "News",
+                country: "USA",
+                language: "English",
+                quality: "Medium",
+                streamUrl: "https://streaming.radionomy.com/NewsTalkRadio",
+                imageUrl: "https://picsum.photos/seed/news1/300/160.jpg",
+                isFavorite: false
+            },
+            {
+                id: 8,
+                name: "Latin Vibes",
+                description: "Salsa, bachata, reggaeton and more",
+                genre: "Latin",
+                country: "Mexico",
+                language: "Spanish",
+                quality: "High",
+                streamUrl: "https://streaming.radionomy.com/LatinVibesRadio",
+                imageUrl: "https://picsum.photos/seed/latin1/300/160.jpg",
+                isFavorite: false
+            },
+{
+                id: 9,
+                name: "Hello FM 106.4 Chennai",
+                description: "Tune to Hello FM radio to listen to your favourite tamil songs",
+                genre: "Music",
+                country: "India",
+                language: "Tamil",
+                quality: "High",
+                streamUrl: "https://listen.openstream.co/4428/audio",
+                imageUrl: "https://picsum.photos/seed/latin1/300/160.jpg",
+                isFavorite: true
+            }
+
+        ];
+
+        // Filter options
+        const genreOptions = ["Music","Rock", "Jazz", "Electronic", "Classical", "Hip Hop", "Pop", "News", "Latin"];
+        const countryOptions = ["India","USA", "Germany", "Austria", "UK", "Mexico"];
+        const languageOptions = ["Tamil","English", "Spanish", "Instrumental"];
+        const qualityOptions = ["Low", "Medium", "High"];
+
+        // Header Component
+        function Header({ searchQuery, onSearchChange }) {
+            return (
+                <header className="header">
+                    <div className="logo">
+                        <i className="fas fa-broadcast-tower"></i>
+                        <span>RadioWave</span>
+                    </div>
+                    <div className="search-container">
+                        <i className="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            className="search-input" 
+                            placeholder="Search radio stations..." 
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                        />
+                    </div>
+                </header>
+            );
+        }
+
+        // Sidebar Component
+        function Sidebar({ filters, onFilterChange, isOpen, onToggle }) {
+            return (
+                <>
+                    <button className="sidebar-toggle" onClick={onToggle}>
+                        <i className="fas fa-filter"></i>
+                    </button>
+                    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+                        <div className="filter-section">
+                            <h3 className="filter-title">
+                                <i className="fas fa-music"></i>
+                                Genre
+                            </h3>
+                            <div className="filter-options">
+                                {genreOptions.map(genre => (
+                                    <div className="filter-option" key={genre}>
+                                        <input 
+                                            type="checkbox" 
+                                            id={`genre-${genre}`} 
+                                            checked={filters.genre.includes(genre)}
+                                            onChange={() => onFilterChange('genre', genre)}
+                                        />
+                                        <label htmlFor={`genre-${genre}`}>{genre}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="filter-section">
+                            <h3 className="filter-title">
+                                <i className="fas fa-globe"></i>
+                                Country
+                            </h3>
+                            <div className="filter-options">
+                                {countryOptions.map(country => (
+                                    <div className="filter-option" key={country}>
+                                        <input 
+                                            type="checkbox" 
+                                            id={`country-${country}`} 
+                                            checked={filters.country.includes(country)}
+                                            onChange={() => onFilterChange('country', country)}
+                                        />
+                                        <label htmlFor={`country-${country}`}>{country}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="filter-section">
+                            <h3 className="filter-title">
+                                <i className="fas fa-language"></i>
+                                Language
+                            </h3>
+                            <div className="filter-options">
+                                {languageOptions.map(language => (
+                                    <div className="filter-option" key={language}>
+                                        <input 
+                                            type="checkbox" 
+                                            id={`language-${language}`} 
+                                            checked={filters.language.includes(language)}
+                                            onChange={() => onFilterChange('language', language)}
+                                        />
+                                        <label htmlFor={`language-${language}`}>{language}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="filter-section">
+                            <h3 className="filter-title">
+                                <i className="fas fa-signal"></i>
+                                Quality
+                            </h3>
+                            <div className="filter-options">
+                                {qualityOptions.map(quality => (
+                                    <div className="filter-option" key={quality}>
+                                        <input 
+                                            type="checkbox" 
+                                            id={`quality-${quality}`} 
+                                            checked={filters.quality.includes(quality)}
+                                            onChange={() => onFilterChange('quality', quality)}
+                                        />
+                                        <label htmlFor={`quality-${quality}`}>{quality}</label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </aside>
+                </>
+            );
+        }
+
+        // Radio Station Card Component
+        function StationCard({ station, isPlaying, currentStationId, onPlay, onFavorite }) {
+            const isActive = currentStationId === station.id;
+            
+            return (
+                <div className="station-card">
+                    <img 
+                        src={station.imageUrl} 
+                        alt={station.name} 
+                        className="station-image" 
+                    />
+                    <div className="station-info">
+                        <h3 className="station-name">{station.name}</h3>
+                        <div className="station-meta">
+                            <span>{station.genre}</span>
+                            <span>{station.country}</span>
+                        </div>
+                        <div className="station-actions">
+                            <button 
+                                className="play-button" 
+                                onClick={() => onPlay(station)}
+                            >
+                                {isActive && isPlaying ? 
+                                    <i className="fas fa-pause"></i> : 
+                                    <i className="fas fa-play"></i>
+                                }
+                            </button>
+                            <button 
+                                className={`favorite-button ${station.isFavorite ? 'active' : ''}`}
+                                onClick={() => onFavorite(station)}
+                            >
+                                <i className="fas fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Audio Player Component
+        function AudioPlayer({ currentStation, isPlaying, onPlayPause, onNext, onPrev, volume, onVolumeChange }) {
+            if (!currentStation) {
+                return (
+                    <div className="audio-player">
+                        <div className="player-info">
+                            <div className="player-details">
+                                <div className="player-name">No station selected</div>
+                                <div className="player-meta">Select a station to play</div>
+                            </div>
+                        </div>
+                        <div className="player-controls">
+                            <button className="control-button">
+                                <i className="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="audio-player">
+                    <div className="player-info">
+                        <img 
+                            src={currentStation.imageUrl} 
+                            alt={currentStation.name} 
+                            className="player-image" 
+                        />
+                        <div className="player-details">
+                            <div className="player-name">{currentStation.name}</div>
+                            <div className="player-meta">{currentStation.genre} • {currentStation.country}</div>
+                        </div>
+                    </div>
+                    <div className="player-controls">
+                        <button className="control-button" onClick={onPrev}>
+                            <i className="fas fa-step-backward"></i>
+                        </button>
+                        <button 
+                            className="control-button play-pause" 
+                            onClick={onPlayPause}
+                        >
+                            {isPlaying ? 
+                                <i className="fas fa-pause"></i> : 
+                                <i className="fas fa-play"></i>
+                            }
+                        </button>
+                        <button className="control-button" onClick={onNext}>
+                            <i className="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                    <div className="volume-control">
+                        <i className="fas fa-volume-up"></i>
+                        <input 
+                            type="range" 
+                            className="volume-slider" 
+                            min="0" 
+                            max="100" 
+                            value={volume}
+                            onChange={(e) => onVolumeChange(parseInt(e.target.value))}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [searchQuery, setSearchQuery] = useState('');
+            const [filters, setFilters] = useState({
+                genre: [],
+                country: [],
+                language: [],
+                quality: []
+            });
+            const [currentStation, setCurrentStation] = useState(null);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [volume, setVolume] = useState(80);
+            const [sidebarOpen, setSidebarOpen] = useState(true);
+            const audioRef = useRef(null);
+
+            // Filter stations based on search and filters
+            const filteredStations = radioStations.filter(station => {
+                // Search filter
+                const matchesSearch = searchQuery === '' || 
+                    station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    station.description.toLowerCase().includes(searchQuery.toLowerCase());
+                
+                // Genre filter
+                const matchesGenre = filters.genre.length === 0 || 
+                    filters.genre.includes(station.genre);
+                
+                // Country filter
+                const matchesCountry = filters.country.length === 0 || 
+                    filters.country.includes(station.country);
+                
+                // Language filter
+                const matchesLanguage = filters.language.length === 0 || 
+                    filters.language.includes(station.language);
+                
+                // Quality filter
+                const matchesQuality = filters.quality.length === 0 || 
+                    filters.quality.includes(station.quality);
+                
+                return matchesSearch && matchesGenre && matchesCountry && 
+                       matchesLanguage && matchesQuality;
+            });
+            
+            // Initialize audio element
+            useEffect(() => {
+                if (!audioRef.current) {
+                    audioRef.current = new Audio();
+                    audioRef.current.volume = volume / 100;
+                    
+                    // Handle audio ended event
+                    audioRef.current.addEventListener('ended', () => {
+                        setIsPlaying(false);
+                    });
+                }
+                
+                return () => {
+                    if (audioRef.current) {
+                        audioRef.current.pause();
+                        audioRef.current.src = '';
+                    }
+                };
+            }, []);
+            
+            // Update audio volume when volume state changes
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.volume = volume / 100;
+                }
+            }, [volume]);
+            
+            // Handle playing a station
+            const handlePlayStation = (station) => {
+                if (currentStation && currentStation.id === station.id) {
+                    // Toggle play/pause for current station
+                    if (isPlaying) {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                    } else {
+                        audioRef.current.play().catch(error => {
+                            console.error("Audio playback failed:", error);
+                            alert("Unable to play this station. The stream might be temporarily unavailable.");
+                        });
+                        setIsPlaying(true);
+                    }
+                } else {
+                    // Play new station
+                    if (audioRef.current) {
+                        audioRef.current.pause();
+                        audioRef.current.src = station.streamUrl;
+                        audioRef.current.play().catch(error => {
+                            console.error("Audio playback failed:", error);
+                            alert("Unable to play this station. The stream might be temporarily unavailable.");
+                        });
+                        setCurrentStation(station);
+                        setIsPlaying(true);
+                    }
+                }
+            };
+            
+            // Handle favorite toggle
+            const handleFavorite = (station) => {
+                const updatedStations = radioStations.map(s => 
+                    s.id === station.id ? { ...s, isFavorite: !s.isFavorite } : s
+                );
+                // In a real app, we would update the state with the new array
+                console.log(`Toggled favorite for ${station.name}: ${!station.isFavorite}`);
+            };
+            
+            // Handle filter change
+            const handleFilterChange = (filterType, value) => {
+                setFilters(prevFilters => {
+                    const currentValues = [...prevFilters[filterType]];
+                    
+                    if (currentValues.includes(value)) {
+                        // Remove from filter
+                        return {
+                            ...prevFilters,
+                            [filterType]: currentValues.filter(v => v !== value)
+                        };
+                    } else {
+                        // Add to filter
+                        return {
+                            ...prevFilters,
+                            [filterType]: [...currentValues, value]
+                        };
+                    }
+                });
+            };
+            
+            // Toggle sidebar
+            const toggleSidebar = () => {
+                setSidebarOpen(!sidebarOpen);
+            };
+            
+            // Handle next station
+            const handleNextStation = () => {
+                if (!currentStation) return;
+                
+                const currentIndex = filteredStations.findIndex(s => s.id === currentStation.id);
+                const nextIndex = (currentIndex + 1) % filteredStations.length;
+                const nextStation = filteredStations[nextIndex];
+                
+                if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.src = nextStation.streamUrl;
+                    audioRef.current.play().catch(error => {
+                        console.error("Audio playback failed:", error);
+                        alert("Unable to play this station. The stream might be temporarily unavailable.");
+                    });
+                }
+                
+                setCurrentStation(nextStation);
+                setIsPlaying(true);
+            };
+            
+            // Handle previous station
+            const handlePrevStation = () => {
+                if (!currentStation) return;
+                
+                const currentIndex = filteredStations.findIndex(s => s.id === currentStation.id);
+                const prevIndex = (currentIndex - 1 + filteredStations.length) % filteredStations.length;
+                const prevStation = filteredStations[prevIndex];
+                
+                if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.src = prevStation.streamUrl;
+                    audioRef.current.play().catch(error => {
+                        console.error("Audio playback failed:", error);
+                        alert("Unable to play this station. The stream might be temporarily unavailable.");
+                    });
+                }
+                
+                setCurrentStation(prevStation);
+                setIsPlaying(true);
+            };
+            
+            // Handle play/pause in player
+            const handlePlayPause = () => {
+                if (!currentStation) return;
+                
+                if (isPlaying) {
+                    audioRef.current.pause();
+                    setIsPlaying(false);
+                } else {
+                    audioRef.current.play().catch(error => {
+                        console.error("Audio playback failed:", error);
+                        alert("Unable to play this station. The stream might be temporarily unavailable.");
+                    });
+                    setIsPlaying(true);
+                }
+            };
+
+            return (
+                <div>
+                    <Header 
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                    />
+                    
+                    <Sidebar 
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        isOpen={sidebarOpen}
+                        onToggle={toggleSidebar}
+                    />
+                    
+                    <main className="content">
+                        <div className="stations-grid">
+                            {filteredStations.map(station => (
+                                <StationCard 
+                                    key={station.id}
+                                    station={station}
+                                    isPlaying={isPlaying}
+                                    currentStationId={currentStation?.id}
+                                    onPlay={handlePlayStation}
+                                    onFavorite={handleFavorite}
+                                />
+                            ))}
+                        </div>
+                    </main>
+                    
+                    <AudioPlayer 
+                        currentStation={currentStation}
+                        isPlaying={isPlaying}
+                        onPlayPause={handlePlayPause}
+                        onNext={handleNextStation}
+                        onPrev={handlePrevStation}
+                        volume={volume}
+                        onVolumeChange={setVolume}
+                    />
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
