@@ -1,1015 +1,373 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RadioWave - Online Radio Aggregator</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #6200ee;
-            --primary-light: #bb86fc;
-            --secondary-color: #03dac6;
-            --background: #121212;
-            --surface: #1e1e1e;
-            --on-background: rgba(255, 255, 255, 0.87);
-            --on-surface: rgba(255, 255, 255, 0.6);
-            --error: #cf6679;
-            --card-bg: #2d2d2d;
-            --sidebar-width: 280px;
-            --header-height: 64px;
-            --player-height: 80px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--background);
-            color: var(--on-background);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header Styles */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--header-height);
-            background-color: var(--surface);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            z-index: 100;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-light);
-            margin-right: 20px;
-        }
-
-        .logo i {
-            margin-right: 10px;
-            font-size: 1.8rem;
-        }
-
-        .search-container {
-            flex: 1;
-            max-width: 600px;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px 20px 12px 45px;
-            border-radius: 30px;
-            border: none;
-            background-color: rgba(255, 255, 255, 0.1);
-            color: var(--on-background);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            background-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 2px var(--primary-light);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--on-surface);
-        }
-
-        /* Main Content Layout */
-        .main-container {
-            display: flex;
-            margin-top: var(--header-height);
-            margin-bottom: var(--player-height);
-            min-height: calc(100vh - var(--header-height) - var(--player-height));
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--surface);
-            padding: 20px;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            position: fixed;
-            height: calc(100vh - var(--header-height) - var(--player-height));
-            top: var(--header-height);
-            left: 0;
-            z-index: 90;
-        }
-
-        .sidebar-toggle {
-            display: none;
-            position: fixed;
-            top: calc(var(--header-height) + 10px);
-            left: 10px;
-            z-index: 95;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .filter-section {
-            margin-bottom: 25px;
-        }
-
-        .filter-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: var(--primary-light);
-            display: flex;
-            align-items: center;
-        }
-
-        .filter-title i {
-            margin-right: 8px;
-        }
-
-        .filter-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .filter-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .filter-option input {
-            margin-right: 10px;
-            accent-color: var(--primary-color);
-        }
-
-        .filter-option label {
-            color: var(--on-surface);
-            cursor: pointer;
-        }
-
-        /* Content Area */
-        .content {
-            flex: 1;
-            padding: 20px;
-            margin-left: var(--sidebar-width);
-        }
-
-        .stations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        /* Radio Station Card */
-        .station-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .station-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .station-image {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .station-info {
-            padding: 15px;
-        }
-
-        .station-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--on-background);
-        }
-
-        .station-meta {
-            display: flex;
-            justify-content: space-between;
-            color: var(--on-surface);
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-
-        .station-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .play-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .play-button:hover {
-            background-color: var(--primary-light);
-        }
-
-        .favorite-button {
-            background: none;
-            border: none;
-            color: var(--on-surface);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s ease;
-        }
-
-        .favorite-button.active {
-            color: #ff4081;
-        }
-
-        /* Audio Player */
-        .audio-player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: var(--player-height);
-            background-color: var(--surface);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-            z-index: 100;
-        }
-
-        .player-info {
-            display: flex;
-            align-items: center;
-            width: 300px;
-        }
-
-        .player-image {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            margin-right: 15px;
-            object-fit: cover;
-        }
-
-        .player-details {
-            overflow: hidden;
-        }
-
-        .player-name {
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .player-meta {
-            font-size: 0.8rem;
-            color: var(--on-surface);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .player-controls {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .control-button {
-            background: none;
-            border: none;
-            color: var(--on-surface);
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .control-button:hover {
-            color: var(--primary-light);
-        }
-
-        .control-button.play-pause {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .control-button.play-pause:hover {
-            background-color: var(--primary-light);
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 200px;
-        }
-
-        .volume-slider {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.2);
-            outline: none;
-        }
-
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary-light);
-            cursor: pointer;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .sidebar-toggle {
-                display: flex;
-            }
-            
-            .content {
-                margin-left: 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .stations-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            }
-            
-            .player-info {
-                width: 220px;
-            }
-            
-            .player-name, .player-meta {
-                max-width: 150px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stations-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .player-info {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            
-            .player-controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .volume-control {
-                width: 100%;
-            }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TamilRadios.co.in</title>
+  <style>
+    :root{--bg:#f4f6f8;--card:#fff;--accent:#0b6efd;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0;background:var(--bg);color:#0b1220}
+    .wrap{max-width:1100px;margin:1px auto;padding:0px}
+    .header{display:flex;align-items:center;justify-content:space-between;background:var(--card);padding:10px 10px;border-radius:0px;box-shadow:0 6px 18px rgba(12,16,20,.06)}
+    .logo{font-weight:700;color:var(--accent)}
+    .controls{display:flex;gap:8px;align-items:center}
+    .search{padding:8px 12px;border-radius:8px;border:1px solid #e6edf3;width:260px}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:10px;margin-top:10px}
+    .card{background:var(--card);padding:5px;border-radius:0px;box-shadow:0 6px 18px rgba(12,16,20,.04)}
+    .radio-list{display:flex;flex-direction:column;gap:8px;max-height:66vh;overflow:auto;padding-right:6px}
+    .radio-item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
+    .radio-item:hover{background:#f2f6fb}
+    .radio-meta{display:flex;flex-direction:column}
+    .genre{font-size:12px;color:#475569;padding:4px 8px;background:#eef3ff;border-radius:999px}
+    .play-btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+    .small{font-size:13px;color:var(--muted)}
+    .player .now-playing{display:flex;gap:12px;align-items:center}
+    .controls-row{display:flex;gap:8px;align-items:center}
+    .fav{background:transparent;border:none;cursor:pointer;font-size:18px}
+    .footer{margin-top:10px;text-align:center;color:#666;font-size:13px}
+    .radio-item img{border-radius:8px;width:52px;height:52px;object-fit:cover}
+    @media(max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .search{width:100%;max-width:240px}
+      .header{flex-wrap:wrap;gap:8px;justify-content:center;text-align:center}
+      .controls{width:100%;justify-content:center}
+    }
+    @media(max-width:600px){
+      .radio-item{flex-direction:column;align-items:flex-start}
+      .play-btn{padding:6px 10px;font-size:14px}
+      .genre{font-size:11px;padding:2px 6px}
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div class="wrap">
+    <div class="header">
+      <div class="logo">TamilRadios.co.in</div>
+      <div class="controls">
+        <input id="search" class="search" placeholder="Search radios, genres..." />
+        <button id="clearBtn" class="play-btn">Clear</button>
+      </div>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <div class="grid">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700">Stations</div>
+          <div id="resultsCount" class="small">0 results</div>
+        </div>
 
-        // Mock data for radio stations with real streaming URLs
-        const radioStations = [
-            {
-                id: 1,
-                name: "Rock Classics",
-                description: "The best rock classics from the 70s and 80s",
-                genre: "Rock",
-                country: "USA",
-                language: "English",
-                quality: "High",
-                streamUrl: "https://streaming.radionomy.com/Rock-Classics-Radio",
-                imageUrl: "https://picsum.photos/seed/rock1/300/160.jpg",
-                isFavorite: false
-            },
-            {
-                id: 2,
-                name: "Jazz Lounge",
-                description: "Smooth jazz for relaxation",
-                genre: "Jazz",
-                country: "USA",
-                language: "English",
-                quality: "Medium",
-                streamUrl: "https://streaming.radionomy.com/JazzLoungeRadio",
-                imageUrl: "https://picsum.photos/seed/jazz1/300/160.jpg",
-                isFavorite: true
-            },
-            {
-                id: 3,
-                name: "Electronic Beats",
-                description: "Latest electronic music and remixes",
-                genre: "Electronic",
-                country: "Germany",
-                language: "English",
-                quality: "High",
-                streamUrl: "https://streaming.radionomy.com/ElectroBeats",
-                imageUrl: "https://picsum.photos/seed/electronic1/300/160.jpg",
-                isFavorite: false
-            },
-            {
-                id: 4,
-                name: "Classical Symphony",
-                description: "Masterpieces from the greatest composers",
-                genre: "Classical",
-                country: "Austria",
-                language: "Instrumental",
-                quality: "High",
-                streamUrl: "https://streaming.radionomy.com/ClassicalSymphony",
-                imageUrl: "https://picsum.photos/seed/classical1/300/160.jpg",
-                isFavorite: false
-            },
-            {
-                id: 5,
-                name: "Hip Hop Central",
-                description: "The latest hip hop and rap tracks",
-                genre: "Hip Hop",
-                country: "USA",
-                language: "English",
-                quality: "High",
-                streamUrl: "https://streaming.radionomy.com/HipHopCentral",
-                imageUrl: "https://picsum.photos/seed/hiphop1/300/160.jpg",
-                isFavorite: true
-            },
-            {
-                id: 6,
-                name: "Pop Hits",
-                description: "Today's top pop hits and chart toppers",
-                genre: "Pop",
-                country: "UK",
-                language: "English",
-                quality: "Medium",
-                streamUrl: "https://streaming.radionomy.com/PopHitsRadio",
-                imageUrl: "https://picsum.photos/seed/pop1/300/160.jpg",
-                isFavorite: false
-            },
-            {
-                id: 7,
-                name: "News Talk",
-                description: "Latest news and current affairs",
-                genre: "News",
-                country: "USA",
-                language: "English",
-                quality: "Medium",
-                streamUrl: "https://streaming.radionomy.com/NewsTalkRadio",
-                imageUrl: "https://picsum.photos/seed/news1/300/160.jpg",
-                isFavorite: false
-            },
-            {
-                id: 8,
-                name: "Latin Vibes",
-                description: "Salsa, bachata, reggaeton and more",
-                genre: "Latin",
-                country: "Mexico",
-                language: "Spanish",
-                quality: "High",
-                streamUrl: "https://streaming.radionomy.com/LatinVibesRadio",
-                imageUrl: "https://picsum.photos/seed/latin1/300/160.jpg",
-                isFavorite: false
-            },
-{
-                id: 9,
-                name: "Hello FM 106.4 Chennai",
-                description: "Tune to Hello FM radio to listen to your favourite tamil songs",
-                genre: "Music",
-                country: "India",
-                language: "Tamil",
-                quality: "High",
-                streamUrl: "https://listen.openstream.co/4428/audio",
-                imageUrl: "https://picsum.photos/seed/latin1/300/160.jpg",
-                isFavorite: true
-            }
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="play-btn" data-filter="all">All</button>
+          <button class="play-btn" data-filter="Tamil">Tamil</button>
+          <button class="play-btn" data-filter="Pop">Pop</button>
+          <button class="play-btn" data-filter="Jazz">Jazz</button>
+          <button class="play-btn" data-filter="favorites">Favorites</button>
+        </div>
 
-        ];
+        <div id="radios" class="radio-list" aria-live="polite"></div>
+      </div>
 
-        // Filter options
-        const genreOptions = ["Music","Rock", "Jazz", "Electronic", "Classical", "Hip Hop", "Pop", "News", "Latin"];
-        const countryOptions = ["India","USA", "Germany", "Austria", "UK", "Mexico"];
-        const languageOptions = ["Tamil","English", "Spanish", "Instrumental"];
-        const qualityOptions = ["Low", "Medium", "High"];
+      <div class="card player">
+        <div style="font-weight:700">Player</div>
+        <div id="playerArea" style="margin-top:8px"></div>
+        <audio id="audio" crossorigin="anonymous"></audio>
+      </div>
+    </div>
 
-        // Header Component
-        function Header({ searchQuery, onSearchChange }) {
-            return (
-                <header className="header">
-                  <a href="/tamilradios/" className="logo">
-                <i className="fas fa-broadcast-tower"></i>
-                <span>RadioWave</span>
-            </a>
-                    <div className="search-container">
-                        <i className="fas fa-search search-icon"></i>
-                        <input 
-                            type="text" 
-                            className="search-input" 
-                            placeholder="Search radio stations..." 
-                            value={searchQuery}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                        />
-                    </div>
-                </header>
-            );
-        }
+    <div class="footer card">
+      © 2025 All rights Reserved Radiosindia.co.in
+    </div>
+  </div>
 
-        // Sidebar Component
-        function Sidebar({ filters, onFilterChange, isOpen, onToggle }) {
-            return (
-                <>
-                    <button className="sidebar-toggle" onClick={onToggle}>
-                        <i className="fas fa-filter"></i>
-                    </button>
-                    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-                        <div className="filter-section">
-                            <h3 className="filter-title">
-                                <i className="fas fa-music"></i>
-                                Genre
-                            </h3>
-                            <div className="filter-options">
-                                {genreOptions.map(genre => (
-                                    <div className="filter-option" key={genre}>
-                                        <input 
-                                            type="checkbox" 
-                                            id={`genre-${genre}`} 
-                                            checked={filters.genre.includes(genre)}
-                                            onChange={() => onFilterChange('genre', genre)}
-                                        />
-                                        <label htmlFor={`genre-${genre}`}>{genre}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div className="filter-section">
-                            <h3 className="filter-title">
-                                <i className="fas fa-globe"></i>
-                                Country
-                            </h3>
-                            <div className="filter-options">
-                                {countryOptions.map(country => (
-                                    <div className="filter-option" key={country}>
-                                        <input 
-                                            type="checkbox" 
-                                            id={`country-${country}`} 
-                                            checked={filters.country.includes(country)}
-                                            onChange={() => onFilterChange('country', country)}
-                                        />
-                                        <label htmlFor={`country-${country}`}>{country}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div className="filter-section">
-                            <h3 className="filter-title">
-                                <i className="fas fa-language"></i>
-                                Language
-                            </h3>
-                            <div className="filter-options">
-                                {languageOptions.map(language => (
-                                    <div className="filter-option" key={language}>
-                                        <input 
-                                            type="checkbox" 
-                                            id={`language-${language}`} 
-                                            checked={filters.language.includes(language)}
-                                            onChange={() => onFilterChange('language', language)}
-                                        />
-                                        <label htmlFor={`language-${language}`}>{language}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div className="filter-section">
-                            <h3 className="filter-title">
-                                <i className="fas fa-signal"></i>
-                                Quality
-                            </h3>
-                            <div className="filter-options">
-                                {qualityOptions.map(quality => (
-                                    <div className="filter-option" key={quality}>
-                                        <input 
-                                            type="checkbox" 
-                                            id={`quality-${quality}`} 
-                                            checked={filters.quality.includes(quality)}
-                                            onChange={() => onFilterChange('quality', quality)}
-                                        />
-                                        <label htmlFor={`quality-${quality}`}>{quality}</label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </aside>
-                </>
-            );
-        }
+  <script>
+ const STATIONS = [
+{id:'a9radio',name:'A9 Radio',genre:'Tamil',bitrate:'128 kbps',url:'https://a9oldhits-a9media.radioca.st/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'abhinayamfm',name:'Abhinayam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://192.99.170.8:5756/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'agaramtamilradio',name:'Agaram Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://agaramtamilradio.serverroom.us:8412/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'airragamcarnaticradio',name:'Air Ragam Carnatic Radio',genre:'Carnatic',bitrate:'128 kbps',url:'http://192.99.46.219:9202/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'akaramfm',name:'Akaram FM',genre:'Tamil',bitrate:'128 kbps',url:'http://198.154.106.101:8118/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'atlantadesiradio',name:'Atlanta Desi Radio',genre:'English',bitrate:'128 kbps',url:'http://listen.radionomy.com:80/AtlantaDesiRadio',website:'#',language:'English',image:'./image/no-image-icon.png'},
+{id:'australiatamilbroadcastingcorporation',name:'Australia Tamil Broadcasting Corporation',genre:'Tamil',bitrate:'128 kbps',url:'http://s7.viastreaming.net:7920/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'bbctamilosaifm',name:'BBC TamilOsai FM',genre:'Live',bitrate:'128 kbps',url:'http://wsdownload.bbc.co.uk/tamil/css/32mp3/latest/tamilosai.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'btctamilfm',name:'BTC Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://199.175.48.216:8080/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'canadiantamilradio',name:'Canadian Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://50.7.76.254:9817/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'carnaticradio',name:'Carnatic Radio',genre:'Carnatic',bitrate:'128 kbps',url:'http://ca.rcast.net:8038/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'chellamfm',name:'Chellam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://5.63.145.172:7124/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'chennaifmrainbow',name:'Chennai FM Rainbow',genre:'Live',bitrate:'128 kbps',url:'http://164.132.63.75:9998/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'cmrradio',name:'CMR Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://108.63.21.20:8020/stream/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ctbcradio',name:'CTBC Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://ctbcfmradio.primcast.com:4086/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'deccanradio',name:'Deccan Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://deccanradio.listenon.in:8300/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'djsirantamilfm',name:'DJ Siran Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://streaming.radionomy.com/DJSiran-Tamil-FM/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'dsrfmradio',name:'DSR FM Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://192.235.87.105:15190/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'eelamfm',name:'Eelam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://majestic.wavestreamer.com:2229/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'elurchifm',name:'Elurchi FM',genre:'Tamil',bitrate:'128 kbps',url:'http://192.240.97.69:9201/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'emtamilfm',name:'EM Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://eu4.fastcast4u.com:5582/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'etrmusicchannelfm',name:'ETR Music Channel FM',genre:'Tamil',bitrate:'128 kbps',url:'http://91.121.134.23:8232/stream/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'europeanfm',name:'European  FM',genre:'English',bitrate:'128 kbps',url:'http://174.36.206.197:8052/',website:'#',language:'English',image:'./image/no-image-icon.png'},
+{id:'ezhisaifm',name:'Ezhisai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://37.187.174.88:8078/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'friendstamilchatfm',name:'Friends Tamil Chat FM',genre:'Tamil',bitrate:'128 kbps',url:'http://167.114.131.90:5750/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geetham80ssongsfm',name:'Geetham 80s Songs FM',genre:'Period',bitrate:'128 kbps',url:'http://www.geethamradio.com:8020/80s_hifi.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geethamfm',name:'Geetham FM',genre:'Latest',bitrate:'128 kbps',url:'http://www.geethamradio.com:8020/new_hifi.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geethamoldsongsfm',name:'Geetham Old Songs FM',genre:'Period',bitrate:'128 kbps',url:'http://www.geethamradio.com:8020/old_hifi.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geethampartysongsfm',name:'Geetham Party Songs FM',genre:'Latest',bitrate:'128 kbps',url:'http://www.geethamradio.com:8020/party_hifi.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geethamradio',name:'Geetham Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://www.geethamradio.com:8020/hifi.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'geethavanifm',name:'Geethavani FM',genre:'Tamil',bitrate:'128 kbps',url:'http://50.7.70.66:8657/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'gokulamtamilradio',name:'Gokulam Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://94.23.62.189:5250/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'goldenfm',name:'Golden FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s21.myradiostream.com:8332/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'gtbcfm',name:'GTBC FM',genre:'Tamil',bitrate:'128 kbps',url:'http://38.96.148.18:6150/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'harrisjayarajradio',name:'Harris Jayaraj Radio',genre:'Fans',bitrate:'128 kbps',url:'http://66.55.145.43:7440/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'hi2fm',name:'Hi2 FM',genre:'Tamil',bitrate:'128 kbps',url:'http://media3.lankasri.fm/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'hungamatamilclassicsalfm',name:'Hungama Tamil Classicsal FM',genre:'Carnatic',bitrate:'128 kbps',url:'http://123.176.41.8:8264/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'hungamatamilhitsfm',name:'Hungama Tamil Hits FM',genre:'Latest',bitrate:'128 kbps',url:'http://123.176.41.8:8632/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ibctamilukfm',name:'IBC Tamil UK FM',genre:'Tamil',bitrate:'128 kbps',url:'http://38.96.148.226:6176/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'idhayamfm',name:'Idhayam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://192.184.9.158:8329/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ilamaifmradio',name:'Ilamai FM Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://74.50.122.103:7404/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ilayarajafm',name:'Ilayaraja FM',genre:'Fans',bitrate:'128 kbps',url:'http://108.166.161.221:7154/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ilayarajaradio',name:'Ilayaraja Radio',genre:'Fans',bitrate:'128 kbps',url:'http://streaming101.radionomy.com/RadionoMiX',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ilctamilfm',name:'ILC Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s6.voscast.com:8484/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'inbatamiloliradio',name:'Inba Tamil Oli Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://192.99.4.210:3246/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'isaiyaruvifm',name:'Isaiyaruvi FM',genre:'Live',bitrate:'128 kbps',url:'http://162.252.85.85:7150/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'itrfm',name:'ITR FM',genre:'Tamil',bitrate:'128 kbps',url:'http://server.tamil.fm:8000/live01',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'iyalisairadio',name:'Iyal Isai Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://37.187.79.93:9350/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'jaffnaradio',name:'Jaffna Radio',genre:'Tamil',bitrate:'128 kbps',url:'https://str2b.openstream.co/789',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'jaffnatamilradio',name:'Jaffna Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://jtrfm.ddnss.de:8000/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'jeifm',name:'JEI FM',genre:'Tamil',bitrate:'128 kbps',url:'http://jeifm.no-ip.org:8808/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'jiljilradio',name:'Jil Jil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://live64.jiljilradio.com:80/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'joytamilradio',name:'Joy Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://50.7.184.106:8722/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'kalasamfm',name:'Kalasam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://live.kalasam.com:8084/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'kanagasabapathyfm',name:'Kanaga Sabapathy FM',genre:'Tamil',bitrate:'128 kbps',url:'http://82.145.43.92:8378/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'lankasrifm',name:'Lankasri FM',genre:'Tamil',bitrate:'128 kbps',url:'http://media2.lankasri.fm/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'likexafm',name:'Likexa FM',genre:'Tamil',bitrate:'128 kbps',url:'http://50.7.77.114:8176/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'livefromnorwayfm',name:'Live From Norway FM',genre:'Tamil',bitrate:'128 kbps',url:'http://66.90.103.189:8852/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ltrfmlive',name:'LTR FM Live',genre:'Tamil',bitrate:'128 kbps',url:'http://http.yourmuze.com/pp-loamyfilly/ltrfm.mp3',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'masalafmradio',name:'Masala FM Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://s9.voscast.com:8720/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'mtr995fmtamil',name:'MTR 995 FM Tamil',genre:'Tamil',bitrate:'128 kbps',url:'http://176.31.120.92:9004/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'mtrtamilonlineradio',name:'MTR Tamil Online Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://192.184.9.158:8864/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'mukilfm',name:'Mukil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://37.130.224.90:80/live/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'muthufm',name:'Muthu FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s8.voscast.com:8546/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'nagafm',name:'Naga FM',genre:'Tamil',bitrate:'128 kbps',url:'http://192.99.9.172:8006/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'nagulan51fm',name:'Nagulan 51 FM',genre:'Tamil',bitrate:'128 kbps',url:'http://91.196.49.252:18140/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'natpufm',name:'Natpu FM',genre:'Tamil',bitrate:'128 kbps',url:'http://usa3.fastcast4u.com:5014/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'newhitsbollywood',name:'New Hits Bollywood',genre:'Bollywood',bitrate:'128 kbps',url:'http://streaming.radionomy.com/NEWHITSOFBOLLYWOOD',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'olisg',name:'Oli SG',genre:'Tamil',bitrate:'128 kbps',url:'http://mediacorp.rastream.com/968fm',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'osaifm',name:'Osai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://astro4.rastream.com/osai',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'oztamilfm',name:'OZ Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://91.121.134.23:8272/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'paristamilfm',name:'Paris Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s6.voscast.com:7108/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'planetradiocitytamilfm',name:'Planet Radio City Tamil FM',genre:'Live',bitrate:'128 kbps',url:'http://prclive2.listenon.in:9948/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'pothikaifm',name:'Pothikai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://136.243.130.139:8387/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'puradsifm',name:'Puradsi FM',genre:'Tamil',bitrate:'128 kbps',url:'http://puradsifm.net:9994/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'puthupaadalradio',name:'Puthu Paadal Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://66.55.145.43:7251/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'raahamfm',name:'Raaham FM ',genre:'Malayalam',bitrate:'128 kbps',url:'http://51.255.127.128:8038/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'radiomadras',name:'Radio Madras',genre:'Tamil',bitrate:'128 kbps',url:'http://streaming202.radionomy.com:80/RadioMadras',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'radiomirchi',name:'Radio Mirchi',genre:'Live',bitrate:'128 kbps',url:'http://164.132.63.75:9994/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'radiovaanam',name:'Radio Vaanam',genre:'Tamil',bitrate:'128 kbps',url:'http://162.252.85.85:7596/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'radiospathyfm',name:'Radiospathy FM',genre:'Tamil',bitrate:'128 kbps',url:'http://82.145.43.92:8378/stream/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'redfmradio',name:'Red FM Radio',genre:'Live',bitrate:'128 kbps',url:'http://192.99.35.93:6130/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'satamilradio',name:'SA Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://109.169.26.216:8004/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'shakthifm24hrlive',name:'Shakthi FM 24hr Live',genre:'Tamil',bitrate:'128 kbps',url:'http://76.164.217.100:7012/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'sikaramfm',name:'Sikaram FM',genre:'Tamil',bitrate:'128 kbps',url:'http://92.222.236.128:8014/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'siruthaifm',name:'Siruthai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://164.132.63.75:9996/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'sivankovilbakthifm',name:'Sivan Kovil Bakthi FM',genre:'Carnatic',bitrate:'128 kbps',url:'http://sivankovil.no-ip.org:8000/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'sooriyanfmonline',name:'Sooriyan FM Online',genre:'Tamil',bitrate:'128 kbps',url:'http://104.238.193.114:7077/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'spbonlineradio',name:'SPB Online Radio',genre:'Fans',bitrate:'128 kbps',url:'http://66.55.145.43:7448/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'starfm',name:'Star FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s1.voscast.com:8734/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'sudarfm',name:'Sudar FM',genre:'Tamil',bitrate:'128 kbps',url:'http://151.80.97.38:8067/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'superhitstamilfm',name:'Super Hits Tamil FM',genre:'Latest',bitrate:'128 kbps',url:'http://listen.radionomy.com:80/SuperHitsTamil',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamburaradiotamilcomedyfm',name:'Tambura Radio Tamil Comedy FM',genre:'Latest',bitrate:'128 kbps',url:'http://listen.radionomy.com/TamburaRadioTamilComedy',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilaruvi',name:'Tamil Aruvi',genre:'Tamil',bitrate:'128 kbps',url:'http://s9.voscast.com:8430/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilflashfm',name:'Tamil Flash FM',genre:'Tamil',bitrate:'128 kbps',url:'http://188.165.192.5:8609/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilinifm',name:'Tamil Ini FM',genre:'Live',bitrate:'128 kbps',url:'http://s9.voscast.com:8708/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilisaifm',name:'Tamil Isai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s10.voscast.com:7150/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilithalfm',name:'Tamil Ithal FM',genre:'Tamil',bitrate:'128 kbps',url:'http://109.169.26.139:8156/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilithalfmradio',name:'Tamil Ithal FM Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://listen.radionomy.com/TAMILTALKRADIO',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilkuyilradio',name:'Tamil Kuyil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://live.tamilkuyilradio.com:8095/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilmirrorradio',name:'Tamil Mirror Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://198.178.123.17:7888/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamiloneradio',name:'Tamil One Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://www.tamilone.ch:8000/stream_64',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilpavairadio',name:'Tamil Pavai Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://94.23.5.193:8007/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilstar',name:'Tamil Star',genre:'Tamil',bitrate:'128 kbps',url:'http://50.7.70.58:8947/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilstarradio',name:'Tamil Star Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://192.99.4.210:3596/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilsunfm',name:'Tamil Sun FM',genre:'Tamil',bitrate:'128 kbps',url:'http://109.169.26.139:8156/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamiltalkradio',name:'Tamil Talk Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://109.169.26.139:8156/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamiltalkradio',name:'Tamil Talk Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://s8.voscast.com:7674/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilarkuralfm',name:'Tamilar Kural FM',genre:'Tamil',bitrate:'128 kbps',url:'http://91.82.85.44:9006/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tamilkushifm',name:'TamilKushi FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s4.voscast.com:8588/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'tbcfmlondon',name:'TBC FM London',genre:'Tamil',bitrate:'128 kbps',url:'http://192.184.9.158:8128/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'thamburafm',name:'Thambura FM',genre:'Latest',bitrate:'128 kbps',url:'http://listen.radionomy.com/tamburatamil/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'thamilanukfm',name:'Thamilan UK FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s10.voscast.com:9962/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'thayagamtamilolifm',name:'Thayagam Tamil Oli FM',genre:'Tamil',bitrate:'128 kbps',url:'http://46.28.53.118:7019/thayagam48K',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'themusiqradio',name:'The Musiq Radio',genre:'English',bitrate:'128 kbps',url:'http://usa3.fastcast4u.com:5574/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'thenralworldradio',name:'Thenral World Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://sc2.ddns.net:9116/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'trttamiloli',name:'TRT Tamil Oli',genre:'Tamil',bitrate:'128 kbps',url:'http://94.23.36.180:5006/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ullasamfmtamil',name:'Ullasam FM Tamil',genre:'Tamil',bitrate:'128 kbps',url:'http://192.99.8.192:2792/ULLasam%20FM',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'ustamilfm',name:'US Tamil FM',genre:'Tamil',bitrate:'128 kbps',url:'http://streaming.radio.co/s0cfc93915/listen',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'v4fm',name:'V4 FM',genre:'Tamil',bitrate:'128 kbps',url:'http://stream.v4fm.com:8812/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'v4fmcst',name:'V4 FM cst',genre:'Tamil',bitrate:'128 kbps',url:'http://stream.v4fm.com:8804/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'v4fmest',name:'V4 FM est',genre:'Tamil',bitrate:'128 kbps',url:'http://stream.v4fm.com:8800/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'v4fmpst',name:'V4 FM pst',genre:'Tamil',bitrate:'128 kbps',url:'http://stream.v4fm.com:8808/stream',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'vanakkamradio',name:'Vanakkam Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://162.244.81.129:8416/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'vanavilfm90s',name:'Vanavil FM 90s',genre:'Period',bitrate:'128 kbps',url:'http://s2.vanavilfm.com:8560/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'vannatamilradio',name:'Vanna Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://5.135.165.204:8018/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'varnamfm',name:'Varnam FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s3.voscast.com:8402/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'vasanthamfm',name:'Vasantham FM',genre:'Tamil',bitrate:'128 kbps',url:'http://76.164.217.100:7489/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'veeramvaanolifm',name:'Veeram Vaanoli FM',genre:'Tamil',bitrate:'128 kbps',url:'http://74.50.122.103:8670/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'vegamtamilradio',name:'Vegam Tamil Radio',genre:'Tamil',bitrate:'128 kbps',url:'http://vtr24.com:8020/live',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'viduthalaifm',name:'Viduthalai FM',genre:'Tamil',bitrate:'128 kbps',url:'http://s6.voscast.com:7404/',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+{id:'yuvanshankarrajaradio',name:'Yuvan Shankar Raja Radio',genre:'Fans',bitrate:'128 kbps',url:'http://listen.radionomy.com/yuvan-shankar-raja-radio',website:'#',language:'Tamil',image:'./image/no-image-icon.png'},
+];
 
-        // Radio Station Card Component
-        function StationCard({ station, isPlaying, currentStationId, onPlay, onFavorite }) {
-            const isActive = currentStationId === station.id;
-            
-            return (
-                <div className="station-card">
-                    <img 
-                        src={station.imageUrl} 
-                        alt={station.name} 
-                        className="station-image" 
-                    />
-                    <div className="station-info">
-                        <h3 className="station-name">{station.name}</h3>
-                        <div className="station-meta">
-                            <span>{station.genre}</span>
-                            <span>{station.country}</span>
-                        </div>
-                        <div className="station-actions">
-                            <button 
-                                className="play-button" 
-                                onClick={() => onPlay(station)}
-                            >
-                                {isActive && isPlaying ? 
-                                    <i className="fas fa-pause"></i> : 
-                                    <i className="fas fa-play"></i>
-                                }
-                            </button>
-                            <button 
-                                className={`favorite-button ${station.isFavorite ? 'active' : ''}`}
-                                onClick={() => onFavorite(station)}
-                            >
-                                <i className="fas fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+  const radiosEl = document.getElementById('radios');
+  const searchEl = document.getElementById('search');
+  const resultsCount = document.getElementById('resultsCount');
+  const audio = document.getElementById('audio');
+  const playerArea = document.getElementById('playerArea');
+  const clearBtn = document.getElementById('clearBtn');
 
-        // Audio Player Component
-        function AudioPlayer({ currentStation, isPlaying, onPlayPause, onNext, onPrev, volume, onVolumeChange }) {
-            if (!currentStation) {
-                return (
-                    <div className="audio-player">
-                        <div className="player-info">
-                            <div className="player-details">
-                                <div className="player-name">No station selected</div>
-                                <div className="player-meta">Select a station to play</div>
-                            </div>
-                        </div>
-                        <div className="player-controls">
-                            <button className="control-button">
-                                <i className="fas fa-play"></i>
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
+  let favorites = JSON.parse(localStorage.getItem('tr_favorites') || '[]');
+  let current = JSON.parse(localStorage.getItem('tr_current') || 'null');
+  let playing = false;
+  let filtered = [...STATIONS];
 
-            return (
-                <div className="audio-player">
-                    <div className="player-info">
-                        <img 
-                            src={currentStation.imageUrl} 
-                            alt={currentStation.name} 
-                            className="player-image" 
-                        />
-                        <div className="player-details">
-                            <div className="player-name">{currentStation.name}</div>
-                            <div className="player-meta">{currentStation.genre} • {currentStation.country}</div>
-                        </div>
-                    </div>
-                    <div className="player-controls">
-                        <button className="control-button" onClick={onPrev}>
-                            <i className="fas fa-step-backward"></i>
-                        </button>
-                        <button 
-                            className="control-button play-pause" 
-                            onClick={onPlayPause}
-                        >
-                            {isPlaying ? 
-                                <i className="fas fa-pause"></i> : 
-                                <i className="fas fa-play"></i>
-                            }
-                        </button>
-                        <button className="control-button" onClick={onNext}>
-                            <i className="fas fa-step-forward"></i>
-                        </button>
-                    </div>
-                    <div className="volume-control">
-                        <i className="fas fa-volume-up"></i>
-                        <input 
-                            type="range" 
-                            className="volume-slider" 
-                            min="0" 
-                            max="100" 
-                            value={volume}
-                            onChange={(e) => onVolumeChange(parseInt(e.target.value))}
-                        />
-                    </div>
-                </div>
-            );
-        }
+  if(current){ audio.src = current.url }
 
-        // Main App Component
-        function App() {
-            const [searchQuery, setSearchQuery] = useState('');
-            const [filters, setFilters] = useState({
-                genre: [],
-                country: [],
-                language: [],
-                quality: []
-            });
-            const [currentStation, setCurrentStation] = useState(null);
-            const [isPlaying, setIsPlaying] = useState(false);
-            const [volume, setVolume] = useState(80);
-            const [sidebarOpen, setSidebarOpen] = useState(true);
-            const audioRef = useRef(null);
+  function renderList(list){
+    radiosEl.innerHTML = '';
+    list.forEach(r=>{
+      const item = document.createElement('div');
+      item.className = 'radio-item';
+      item.tabIndex = 0;
+      item.innerHTML = `
+        <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:#eef;display:flex;align-items:center;justify-content:center">
+          ${r.image
+            ? `<img src="${r.image}" alt="${r.name} logo">`
+            : `<span style="font-weight:700">${r.name.charAt(0)}</span>`
+          }
+        </div>
+        <div class="radio-meta">
+          <div style="display:flex;gap:8px;align-items:center"><div style="font-weight:700">${r.name}</div><div class="genre">${r.genre}</div></div>
+          <div class="small">${r.bitrate} • ${r.language}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <button class="fav" data-id="${r.id}" title="Toggle favorite">${favorites.includes(r.id)?'★':'☆'}</button>
+         <!-- <button class="play-btn" data-play="${r.id}">${(current && current.id===r.id && playing)?'Pause':'Play'}</button>
+		 <button class="play-btn" data-play="${r.id}">  ${(current && current.id === r.id && playing) ? '⏸️' : '▶️'}</button>-->
+		 <button class="play-btn" data-play="${r.id}">
+			${(current && current.id === r.id && playing)
+			? `<svg width="16" height="16" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`
+			: `<svg width="16" height="16" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
+		</button>
+		
+        </div>
+      `;
+      item.addEventListener('click', (e)=>{
+        if(e.target.closest('button')) return;
+        playStation(r);
+      });
+      item.addEventListener('keydown', (e)=>{ if(e.key==='Enter') playStation(r) });
+      item.querySelector('.fav').addEventListener('click',(ev)=>{
+        ev.stopPropagation(); toggleFav(r.id); render();
+      });
+      item.querySelector('[data-play]').addEventListener('click',(ev)=>{ ev.stopPropagation(); playStation(r); render(); });
+      radiosEl.appendChild(item);
+    });
+    resultsCount.textContent = list.length + ' results';
+  }
 
-            // Filter stations based on search and filters
-            const filteredStations = radioStations.filter(station => {
-                // Search filter
-                const matchesSearch = searchQuery === '' || 
-                    station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    station.description.toLowerCase().includes(searchQuery.toLowerCase());
-                
-                // Genre filter
-                const matchesGenre = filters.genre.length === 0 || 
-                    filters.genre.includes(station.genre);
-                
-                // Country filter
-                const matchesCountry = filters.country.length === 0 || 
-                    filters.country.includes(station.country);
-                
-                // Language filter
-                const matchesLanguage = filters.language.length === 0 || 
-                    filters.language.includes(station.language);
-                
-                // Quality filter
-                const matchesQuality = filters.quality.length === 0 || 
-                    filters.quality.includes(station.quality);
-                
-                return matchesSearch && matchesGenre && matchesCountry && 
-                       matchesLanguage && matchesQuality;
-            });
-            
-            // Initialize audio element
-            useEffect(() => {
-                if (!audioRef.current) {
-                    audioRef.current = new Audio();
-                    audioRef.current.volume = volume / 100;
-                    
-                    // Handle audio ended event
-                    audioRef.current.addEventListener('ended', () => {
-                        setIsPlaying(false);
-                    });
-                }
-                
-                return () => {
-                    if (audioRef.current) {
-                        audioRef.current.pause();
-                        audioRef.current.src = '';
-                    }
-                };
-            }, []);
-            
-            // Update audio volume when volume state changes
-            useEffect(() => {
-                if (audioRef.current) {
-                    audioRef.current.volume = volume / 100;
-                }
-            }, [volume]);
-            
-            // Handle playing a station
-            const handlePlayStation = (station) => {
-                if (currentStation && currentStation.id === station.id) {
-                    // Toggle play/pause for current station
-                    if (isPlaying) {
-                        audioRef.current.pause();
-                        setIsPlaying(false);
-                    } else {
-                        audioRef.current.play().catch(error => {
-                            console.error("Audio playback failed:", error);
-                            alert("Unable to play this station. The stream might be temporarily unavailable.");
-                        });
-                        setIsPlaying(true);
-                    }
-                } else {
-                    // Play new station
-                    if (audioRef.current) {
-                        audioRef.current.pause();
-                        audioRef.current.src = station.streamUrl;
-                        audioRef.current.play().catch(error => {
-                            console.error("Audio playback failed:", error);
-                            alert("Unable to play this station. The stream might be temporarily unavailable.");
-                        });
-                        setCurrentStation(station);
-                        setIsPlaying(true);
-                    }
-                }
-            };
-            
-            // Handle favorite toggle
-            const handleFavorite = (station) => {
-                const updatedStations = radioStations.map(s => 
-                    s.id === station.id ? { ...s, isFavorite: !s.isFavorite } : s
-                );
-                // In a real app, we would update the state with the new array
-                console.log(`Toggled favorite for ${station.name}: ${!station.isFavorite}`);
-            };
-            
-            // Handle filter change
-            const handleFilterChange = (filterType, value) => {
-                setFilters(prevFilters => {
-                    const currentValues = [...prevFilters[filterType]];
-                    
-                    if (currentValues.includes(value)) {
-                        // Remove from filter
-                        return {
-                            ...prevFilters,
-                            [filterType]: currentValues.filter(v => v !== value)
-                        };
-                    } else {
-                        // Add to filter
-                        return {
-                            ...prevFilters,
-                            [filterType]: [...currentValues, value]
-                        };
-                    }
-                });
-            };
-            
-            // Toggle sidebar
-            const toggleSidebar = () => {
-                setSidebarOpen(!sidebarOpen);
-            };
-            
-            // Handle next station
-            const handleNextStation = () => {
-                if (!currentStation) return;
-                
-                const currentIndex = filteredStations.findIndex(s => s.id === currentStation.id);
-                const nextIndex = (currentIndex + 1) % filteredStations.length;
-                const nextStation = filteredStations[nextIndex];
-                
-                if (audioRef.current) {
-                    audioRef.current.pause();
-                    audioRef.current.src = nextStation.streamUrl;
-                    audioRef.current.play().catch(error => {
-                        console.error("Audio playback failed:", error);
-                        alert("Unable to play this station. The stream might be temporarily unavailable.");
-                    });
-                }
-                
-                setCurrentStation(nextStation);
-                setIsPlaying(true);
-            };
-            
-            // Handle previous station
-            const handlePrevStation = () => {
-                if (!currentStation) return;
-                
-                const currentIndex = filteredStations.findIndex(s => s.id === currentStation.id);
-                const prevIndex = (currentIndex - 1 + filteredStations.length) % filteredStations.length;
-                const prevStation = filteredStations[prevIndex];
-                
-                if (audioRef.current) {
-                    audioRef.current.pause();
-                    audioRef.current.src = prevStation.streamUrl;
-                    audioRef.current.play().catch(error => {
-                        console.error("Audio playback failed:", error);
-                        alert("Unable to play this station. The stream might be temporarily unavailable.");
-                    });
-                }
-                
-                setCurrentStation(prevStation);
-                setIsPlaying(true);
-            };
-            
-            // Handle play/pause in player
-            const handlePlayPause = () => {
-                if (!currentStation) return;
-                
-                if (isPlaying) {
-                    audioRef.current.pause();
-                    setIsPlaying(false);
-                } else {
-                    audioRef.current.play().catch(error => {
-                        console.error("Audio playback failed:", error);
-                        alert("Unable to play this station. The stream might be temporarily unavailable.");
-                    });
-                    setIsPlaying(true);
-                }
-            };
+  function renderPlayer(){
+    if(!current){
+      playerArea.innerHTML = '<div class="small">No station selected. Click a station to start playing.</div>';
+      return;
+    }
+    playerArea.innerHTML = `
+      <div class="now-playing">
+        <div style="width:72px;height:72px;border-radius:8px;overflow:hidden;background:#e6f0ff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px">
+          ${current.image
+            ? `<img src="${current.image}" alt="${current.name} logo" style="width:100%;height:100%;object-fit:cover">`
+            : current.name.charAt(0)
+          }
+        </div>
+        <div>
+          <div style="font-weight:700">${current.name}</div>
+          <div class="small">${current.genre} • ${current.bitrate}</div>
+          <div style="margin-top:8px"><a href="${current.website}" target="_blank">Station site</a></div>
+        </div>
+      </div>
+      <div class="controls-row" style="margin-top:8px">
+        <!--<button id="playerPlay" class="play-btn">${playing? 'Pause':'Play'}</button>
+		<button id="playerPlay" class="play-btn">${playing ? '⏸️' : '▶️'}</button>-->
+		<button id="playerPlay" class="play-btn">
+  ${playing
+    ? `<svg width="16" height="16" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
+</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="small">Volume</label>
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="${audio.volume || 0.8}" />
+        </div>
+      </div>
+    `;
+    document.getElementById('playerPlay').addEventListener('click', ()=>{
+      if(playing) pauseAudio(); else playAudio(); render();
+    });
+    document.getElementById('volume').addEventListener('input', (e)=>{ audio.volume = Number(e.target.value) });
+  }
 
-            return (
-                <div>
-                    <Header 
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                    />
-                    
-                    <Sidebar 
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        isOpen={sidebarOpen}
-                        onToggle={toggleSidebar}
-                    />
-                    
-                    <main className="content">
-                        <div className="stations-grid">
-                            {filteredStations.map(station => (
-                                <StationCard 
-                                    key={station.id}
-                                    station={station}
-                                    isPlaying={isPlaying}
-                                    currentStationId={currentStation?.id}
-                                    onPlay={handlePlayStation}
-                                    onFavorite={handleFavorite}
-                                />
-                            ))}
-                        </div>
-                    </main>
-                    
-                    <AudioPlayer 
-                        currentStation={currentStation}
-                        isPlaying={isPlaying}
-                        onPlayPause={handlePlayPause}
-                        onNext={handleNextStation}
-                        onPrev={handlePrevStation}
-                        volume={volume}
-                        onVolumeChange={setVolume}
-                    />
-                </div>
-            );
-        }
+  function toggleFav(id){
+    if(favorites.includes(id)) favorites = favorites.filter(x=>x!==id); else favorites.push(id);
+    localStorage.setItem('tr_favorites', JSON.stringify(favorites));
+  }
 
-        // Render the app
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
+  function playStation(st){
+    if(current && current.id===st.id && playing){ pauseAudio(); return }
+    current = st;
+    audio.src = st.url;
+    audio.play().then(()=>{ playing = true; localStorage.setItem('tr_current', JSON.stringify(current)); render(); }).catch(err=>{
+      console.warn('Play failed', err);
+      playing = false;
+     <!-- alert('Playback blocked or stream unreachable (CORS / invalid URL). Open station site or replace URL in code.');-->
+      render();
+    });
+    render();
+  }
+
+  function playAudio(){
+    if(!current) return;
+    audio.play().then(()=>{ playing=true; render(); }).catch(()=>{ playing=false; render(); })
+  }
+  function pauseAudio(){ audio.pause(); playing=false; render(); }
+
+  function doSearch(q){
+    const s = (q||'').trim().toLowerCase();
+    if(!s) filtered = [...STATIONS];
+    else filtered = STATIONS.filter(r=> (r.name + ' ' + r.genre + ' ' + r.language).toLowerCase().includes(s));
+    renderList(filtered);
+  }
+
+  document.querySelectorAll('[data-filter]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const f = btn.getAttribute('data-filter');
+      if(f==='all'){ filtered = [...STATIONS]; }
+      else if(f==='favorites'){ filtered = STATIONS.filter(r=>favorites.includes(r.id)); }
+      else { filtered = STATIONS.filter(r=>r.genre===f); }
+      searchEl.value=''; renderList(filtered);
+    });
+  });
+
+  searchEl.addEventListener('input', (e)=> doSearch(e.target.value));
+  clearBtn.addEventListener('click', ()=>{ searchEl.value=''; filtered=[...STATIONS]; render(); });
+
+  audio.addEventListener('play', ()=>{ playing=true; render(); });
+  audio.addEventListener('pause', ()=>{ playing=false; render(); });
+  audio.addEventListener('ended', ()=>{ playing=false; render(); });
+  audio.addEventListener('error', ()=>{ console.warn('Audio error'); playing=false; render(); });
+
+  function render(){
+    renderList(filtered);
+    renderPlayer();
+  }
+
+  render();
+  window.TAMILRADIOS = {STATIONS, get favorites(){return favorites}, get current(){return current}};
+  </script>
 </body>
 </html>
