@@ -8,13 +8,13 @@
    :root{--bg:#f4f6f8;--card:#fff;--accent:#0b6efd;--muted:#6b7280}
     *{box-sizing:border-box}
     body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0;background:var(--bg);color:#0b1220}
-    .wrap{max-width:1100px;margin:0px auto;padding:0px}
+    .wrap{max-width:1100px;margin:0px auto;padding:0px; border:solid 1px #06b6d4;}
     .header{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg, #0ea5a5, #0284c7);padding:10px 10px;border-radius:0px;box-shadow:0 6px 18px rgba(12,16,20,.06)}
     .logo{font-weight:700;color:#e6eef8}
     .controls{display:flex;gap:8px;align-items:center}
     .search{padding:8px 12px;border-radius:8px;border:1px solid #e6edf3;width:260px}
     .grid{display:grid;grid-template-columns:1fr 340px;gap:1px;margin-top:1px}
-    .card{background:var(--card);padding:5px;border-radius:0px;box-shadow:0 6px 18px rgba(12,16,20,.04)}
+    .card{background:var(--card);padding:0px;border-radius:0px;box-shadow:0 6px 18px rgba(12,16,20,.04)}
     .radio-list{display:flex;flex-direction:column;gap:8px;max-height:66vh;overflow:auto;padding-right:6px}
     .radio-item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
     .radio-item:hover{background:#f2f6fb}
@@ -34,7 +34,7 @@
       .controls{width:100%;justify-content:center}
     }
     @media(max-width:600px){
-      .radio-item{align-items:flex-start} 
+      .radio-item{align-items:flex-start}
       .play-btn{padding:6px 10px;font-size:14px}
       .genre{font-size:11px;padding:2px 6px}
     }
@@ -80,8 +80,7 @@
         <div id="radios" class="radio-list" aria-live="polite"></div>
       </div>
 
-      <div class="card player">
-        <div style="font-weight:700">Player</div>
+      <div class="card player"> 
         <div id="playerArea" style="margin-top:8px"></div>
         <audio id="audio" crossorigin="anonymous"></audio>
       </div>
