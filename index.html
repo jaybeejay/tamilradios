@@ -50,7 +50,45 @@
     .radio-list{display:flex;flex-direction:column;gap:8px;max-height:66vh;overflow:auto;padding-right:6px}
     .radio-item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
     .radio-item:hover{background:#f2f6fb}
-    .radio-meta{display:flex;flex-direction:column}
+	./* Selected style (stronger specificity + child rules) */
+.radio-item.selected {
+  background: linear-gradient(135deg, #0ea5a5, #0284c7);
+  border-color: rgba(0,0,0,0.08);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.18);
+  transition: transform .12s ease, box-shadow .12s ease;
+  transform: translateY(-1px);
+}
+
+/* ensure text inside turns white */
+.radio-item.selected .radio-meta,
+.radio-item.selected .radio-meta > div,
+.radio-item.selected .small {
+  color: #ffffff !important;
+}
+
+/* make genre pill visible on selected */
+.radio-item.selected .genre {
+  background: rgba(255,255,255,0.15);
+  color: #fff !important;
+}
+
+/* stronger hover for unselected */
+.radio-item:not(.selected):hover {
+  background: #f2f6fb;
+}
+
+/* Focus/keyboard accessible state */
+.radio-item:focus {
+  outline: 3px solid rgba(11,110,237,0.18);
+  outline-offset: 2px;
+}
+
+/* If inline style is accidentally overriding background, force it */
+.radio-item.selected {
+  background-image: linear-gradient(135deg, #0ea5a5, #0284c7) !important;
+}
+	.radio-meta{display:flex;flex-direction:column}
     .genre{font-size:12px;color:#475569;padding:4px 8px;background:#eef3ff;border-radius:999px}
     .play-btn{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(135deg, #7c3aed, #06b6d4);color:#fff;cursor:pointer}
     .small{font-size:13px;color:var(--muted)}
@@ -259,7 +297,7 @@
   </div>
 
   <div class="footer-bottom">
-    © 2025 All Rights Reserved — tamilradios.co.in
+    © 2025 All Rights Reserved — Radiosindia.co.in
   </div>
 </div>
 
@@ -329,8 +367,12 @@
     radiosEl.innerHTML = '';
     list.forEach(r=>{
       const item = document.createElement('div');
-      item.className = 'radio-item';
-      item.tabIndex = 0;
+        // add 'selected' when current is playing that station
+    const isSelected = current && current.id === r.id;
+    item.className = 'radio-item' + (isSelected ? ' selected' : '');
+    item.tabIndex = 0;
+    item.setAttribute('role','button');
+    item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
       item.innerHTML = `
         <div style="width:52px;height:52px;border-radius:8px;overflow:hidden;background:#eef;display:flex;align-items:center;justify-content:center">
           ${r.image
