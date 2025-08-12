@@ -1,9 +1,41 @@
+
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>📻 TamilRadios.co.in</title>
+<meta charset="utf-8" />  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
+  <!-- Primary Meta Tags -->
+<title>📻Tamil Radios.co.in - Listen to Tamil Online FM & Live Radio Stations</title>
+<meta name="title" content="Tamil Radios - Listen to Tamil Online FM & Live Radio Stations">
+<meta name="description" content="Listen to your favorite Tamil FM and online radio stations live on TamilRadios.co.in. Enjoy Tamil music, news, talk shows, devotional songs, and more 24/7 from around the world.">
+
+<!-- Keywords -->
+<meta name="keywords" content="Tamil radio, Tamil FM, Tamil online radio, live Tamil music, Tamil songs, Tamil devotional, Tamil talk shows, Tamil news radio, Tamil FM online, TamilRadios.co.in">
+<!-- Viewport -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<!-- Robots -->
+<meta name="robots" content="index, follow">
+
+<!-- Language -->
+<meta http-equiv="Content-Language" content="en">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.tamilradios.co.in/">
+<meta property="og:title" content="Tamil Radios - Listen to Tamil Online FM & Live Radio Stations">
+<meta property="og:description" content="Stream Tamil FM & online radio stations 24/7. Enjoy Tamil music, news, devotional, and talk shows worldwide.">
+<meta property="og:image" content="https://www.tamilradios.co.in/assets/images/tamilradios-og.jpg">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://www.tamilradios.co.in/">
+<meta name="twitter:title" content="Tamil Radios - Listen to Tamil Online FM & Live Radio Stations">
+<meta name="twitter:description" content="Listen live to Tamil FM stations, music, devotional, talk shows, and news on TamilRadios.co.in anytime, anywhere.">
+<meta name="twitter:image" content="https://www.tamilradios.co.in/assets/images/tamilradios-og.jpg">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="/favicon.png">
+
   <style>
    :root{--bg:#f4f6f8;--card:#fff;--accent:#0b6efd;--muted:#6b7280}
     *{box-sizing:border-box}
@@ -25,7 +57,99 @@
     .player .now-playing{display:flex;gap:12px;align-items:center}
     .controls-row{display:flex;gap:8px;align-items:center}
     .fav{background:transparent;border:none;cursor:pointer;font-size:18px}
-    .footer{margin-top:1px;text-align:center;color:#e6eef8;font-size:13px;background:linear-gradient(180deg, #0ea5a5, #0284c7);}
+    /*.footer{margin-top:1px;text-align:center;color:#e6eef8;font-size:13px;background:linear-gradient(180deg, #0ea5a5, #0284c7);}*/
+	/* FOOTER ALIGNMENT FIX */
+.footer { 
+  color:#e6eef8;
+  background: linear-gradient(180deg, #0ea5a5, #0284c7);
+  border-top: 1px solid #ddd;
+  font-size: 14px;
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.footer-col {
+  flex: 1 1 200px;
+}
+.footer-col h4 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  
+}
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.footer-links a {
+  color: #ffff;
+  text-decoration: none;
+}
+.footer-links a:hover {
+  text-decoration: underline;
+}
+.social-links a {
+  display: block;
+  color: #ffff;
+  margin-bottom: 5px;
+  text-decoration: none;
+}
+.social-links a i {
+  margin-right: 6px;
+  color: #555;
+}
+.subscribe-form {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.subscribe-form input {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.subscribe-form button {
+  padding: 6px 12px;
+  background: #ff9800;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.subscribe-form button:hover {
+  background: #e68900;
+}
+.footer-bottom {
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 13px; 
+}
+
+/* Responsive: Stack columns on small screens */
+@media (max-width: 768px) {
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer-col {
+    flex: 1 1 100%;
+    min-width: 100%;
+	text-align: center;
+  }
+  .footer-links,
+  .social-links,
+  .subscribe-form {
+    align-items: center;
+  }
+}
+
     .radio-item img{border-radius:8px;width:52px;height:52px;object-fit:cover}
     @media(max-width:900px){
       .grid{grid-template-columns:1fr}
@@ -86,9 +210,60 @@
       </div>
     </div>
 
-    <div class="footer card">
-      © 2025 All rights Reserved Radiosindia.co.in
+    <!-- Footer -->
+<!-- aligned footer -->
+<div class="footer card">
+  <div class="footer-inner">
+    
+    <!-- Column 1 -->
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <nav class="footer-links">
+        <a href="#">Home</a>
+        <a href="#">About Us</a>
+        <a href="#">Contact Us</a>
+      </nav>
     </div>
+
+    <!-- Column 2 -->
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <nav class="footer-links">
+        <a href="#">Terms & Conditions</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Disclaimer</a>
+      </nav>
+    </div>
+
+    <!-- Column 3 -->
+    <div class="footer-col">
+      <h4>Genres</h4>
+      <nav class="footer-links">
+        <a href="#">Tamil FM</a>
+        <a href="#">Carnatic</a>
+        <a href="#">Devotional</a>
+        <a href="#">News</a>
+      </nav>
+    </div>
+
+    <!-- Column 4 -->
+    <div class="footer-col">
+      <h4>Stay Connected</h4>
+      <div class="social-links">
+        <a href="#"><i class="fab fa-facebook"></i> Facebook</a>
+        <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
+        <a href="#"><i class="fab fa-youtube"></i> YouTube</a>
+      </div> 
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 All Rights Reserved — Radiosindia.co.in
+  </div>
+</div>
+
+
   </div>
 
   <script>
@@ -291,3 +466,6 @@
   </script>
 </body>
 </html>
+
+
+ 
